@@ -26,8 +26,6 @@ public class DiscordTokenTest {
     void getToken() throws IOException {
         DiscordToken discordToken = new DiscordToken(path);
 
-        String botToken = discordToken.getBotToken();
-
-        assertThat(botToken).isEqualTo("asdf\n");
+        assertThat(discordToken).isEqualTo(new DiscordToken(path));
     }
 }
