@@ -1,14 +1,20 @@
 package discordbot;
 
+import lombok.EqualsAndHashCode;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
+@EqualsAndHashCode
 public class BotEvent {
 
 	private Status status;
 
 	public BotEvent() {
-		this.status = Status.OFFLINE;
+		this(Status.OFFLINE);
+	}
+
+	BotEvent(Status status) {
+		this.status = status;
 	}
 
 	// 메세지를 받을 때
@@ -37,7 +43,7 @@ public class BotEvent {
 		this.status.print();
 	}
 
-	private enum Status {
+	enum Status {
 		OFFLINE(0, "offline"),
 		ONLINE(1, "online");
 
