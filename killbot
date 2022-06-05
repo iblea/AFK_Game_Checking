@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# ps -aef | grpe discordbot
+
+
+pkill -f discordbot
+pkill -f discordbot
+pkill -f discordbot
+
+echo "killbot success"
