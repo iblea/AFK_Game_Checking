@@ -55,10 +55,10 @@ public class BotEvent {
 			this.msg = msg;
 		}
 
-        public void print() {
-            System.out.printf("Current Status is (%d) [%s]", this.code, this.msg);
-        }
+		public void print() {
+			System.out.printf("Current Status is (%d) [%s]", this.code, this.msg);
+		}
 
 	}
-    
+
 }
