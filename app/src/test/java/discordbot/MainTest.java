@@ -4,13 +4,12 @@
 package discordbot;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class MainTest {
-    @Test
+	@Test
 	void appHasAGreeting() {
-        Main classUnderTest = new Main();
-        System.out.println("Test Example");
-        // assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
-    }
+		Main classUnderTest = new Main();
+		System.out.println("Test Example");
+		// assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
+	}
 }
