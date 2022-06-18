@@ -1,19 +1,31 @@
 package discordbot;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 
 
 public class DiscordTokenTest {
+	private final String path = "./src/test/resources/token.txt";
+
+	@Test
+	void isNotExistTokenFile() {
+		assertThatIOException()
+				.isThrownBy(() -> new DiscordToken("xxx"));
+	}
 
 	@Test
 	void isExistTokenFile() throws IOException {
-		String path = "";
+		new DiscordToken(path);
+	}
 
-		assertThrows(IOException.class, () -> {
-			DiscordToken tokentest = new DiscordToken(path);
-		});
-    }
+	@Test
+	void getToken() throws IOException {
+		DiscordToken discordToken = new DiscordToken(path);
 
+		assertThat(discordToken).isEqualTo(new DiscordToken(path));
+	}
 }
