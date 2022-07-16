@@ -19,6 +19,8 @@ public class DiscordTokenTest {
 
 	@Test
 	void isExistTokenFile() throws IOException {
+		String curpath = System.getProperty("user.dir");
+		System.out.println("Working Directory = " + curpath);
 		new DiscordToken(path);
 	}
 
@@ -28,4 +30,17 @@ public class DiscordTokenTest {
 
 		assertThat(discordToken).isEqualTo(new DiscordToken(path));
 	}
+
+	@Test
+	void check_CR_chr() throws IOException {
+		DiscordToken discordToken = new DiscordToken(path);
+		assertThat(discordToken.getBotToken().contains("\r")).isFalse();
+	}
+
+	@Test
+	void check_LF_chr() throws IOException {
+		DiscordToken discordToken = new DiscordToken(path);
+		assertThat(discordToken.getBotToken().contains("\n")).isFalse();
+	}
+
 }
