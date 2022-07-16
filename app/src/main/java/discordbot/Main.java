@@ -12,7 +12,7 @@ import javax.security.auth.login.LoginException;
 import java.io.IOException;
 
 public class Main extends ListenerAdapter {
-	private static final String PATH = "./src/main/resources/token.txt";
+	private static final String PATH = "./app/src/main/resources/token.txt";
 
 	public static void main(String[] args)
 			throws LoginException, IOException {
