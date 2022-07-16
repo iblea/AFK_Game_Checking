@@ -11,10 +11,12 @@ import java.nio.file.Paths;
 public class DiscordToken {
 
 	@Getter
-	private final String botToken;
+	private String botToken;
 
 	public DiscordToken(String path) throws IOException {
 		this.botToken = readToken(path);
+		this.botToken = this.botToken.replaceAll("\r", "");
+		this.botToken = this.botToken.replaceAll("\n", "");
 	}
 
 	/**
