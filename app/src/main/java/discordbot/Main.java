@@ -31,8 +31,6 @@ public class Main extends ListenerAdapter {
 		BotEvent botEvent = new BotEvent();
 
 		// botEvent Status 설정
-		botEvent.setOnline();
-		botEvent.printStatus();
 		jda.addEventListener(botEvent);
 
 		System.out.println("Bot Run Success");
