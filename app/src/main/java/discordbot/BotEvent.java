@@ -1,23 +1,15 @@
 package discordbot;
 
-import lombok.EqualsAndHashCode;
-import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
-@EqualsAndHashCode
-public class BotEvent {
-
-	private Status status;
-
+public class BotEvent extends ListenerAdapter
+{
 	public BotEvent() {
-		this(Status.OFFLINE);
 	}
 
-	BotEvent(Status status) {
-		this.status = status;
-	}
-
-	// 메세지를 받을 때
+	/*
+	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
 		if (event.isFromType(ChannelType.PRIVATE)) {
 			System.out.printf("[PM] %s %s\n", event.getAuthor().getName(),
@@ -30,35 +22,22 @@ public class BotEvent {
 
 		}
 	}
+	*/
 
-	public void setOffline() {
-		this.status = Status.OFFLINE;
-	}
-
-	public void setOnline() {
-		this.status = Status.ONLINE;
-	}
-
-	public void printStatus() {
-		this.status.print();
-	}
-
-	enum Status {
-		OFFLINE(0, "offline"),
-		ONLINE(1, "online");
-
-		private final int code;
-		private final String msg;
-
-		Status(int code, String msg) {
-			this.code = code;
-			this.msg = msg;
+	// 메세지를 받을 때
+	@Override
+	public void onMessageReceived(MessageReceivedEvent event) {
+		if (event.getAuthor().isBot()) {
+			return;
 		}
+		String msg = event.getMessage().getContentRaw();
 
-		public void print() {
-			System.out.printf("Current Status is (%d) [%s]", this.code, this.msg);
+		BotCommand botCommand = new BotCommand(event);
+		int status = botCommand.botCommandContent(msg);
+
+		if (status <= 0) {
+			System.out.println("잘못된 명령어입니다.");
 		}
-
 	}
 
 }
