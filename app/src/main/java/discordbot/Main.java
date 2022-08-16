@@ -10,11 +10,19 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class Main extends ListenerAdapter {
 	private static final String PATH = "./app/src/main/resources/token.txt";
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException, SQLException {
+		Sqlite test = new Sqlite();
+		System.out.println("main");
+		test.init();
+		test.close();
+	}
+
+	public static void main2(String[] args)
 			throws LoginException, IOException {
 		DiscordToken token = new DiscordToken(PATH);
 		System.out.println("botToken : " + token.getBotToken());
