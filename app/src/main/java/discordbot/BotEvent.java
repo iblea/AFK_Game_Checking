@@ -62,21 +62,21 @@ public class BotEvent extends ListenerAdapter
 		int status = botCommand.botCommandContent(msg);
 
 		if (status < 0) {
-			// System.out.println("잘못된 명령어입니다.");
-			String help_content = "**Bot Error!**\nPlease contact the Bot developer.";
-			MessageChannel channel = event.getChannel();
-			channel.sendMessage(help_content).queue();
+			System.out.println("Bot Error");
+			// String help_content = "**Bot Error!**\nPlease contact the Bot developer.";
+			// MessageChannel channel = event.getChannel();
+			// channel.sendMessage(help_content).queue();
 
-			return;
+			// return;
 		}
 
 		if (status == 0) {
-			// System.out.println("잘못된 명령어입니다.");
-			String help_content = "Wrong Command";
-			MessageChannel channel = event.getChannel();
-			channel.sendMessage(help_content).queue();
+			System.out.println("Wrong Command");
+			// String help_content = "Wrong Command";
+			// MessageChannel channel = event.getChannel();
+			// channel.sendMessage(help_content).queue();
 
-			return;
+			// return;
 		}
 	}
 
