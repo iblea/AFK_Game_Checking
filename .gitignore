@@ -10,6 +10,13 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# vim file
+*.swp
+*.swo
+*.swn
+*.swm
+*.swl
+
 # Package Files #
 *.jar
 *.war
@@ -34,3 +41,6 @@ build
 
 # Discord Bot Token Information
 token.txt
+
+# db file
+*.sqlite
