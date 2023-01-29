@@ -18,7 +18,7 @@ public class BotEvent extends ListenerAdapter
 			return;
 		}
         Message message = event.getMessage();
-        String content = message.getContentRaw(); 
+        String content = message.getContentRaw();
         // getContentRaw() is an atomic getter
         // getContentDisplay() is a lazy getter which modifies the content for e.g. console view (strip discord formatting)
         if (content.equals("!ping"))
