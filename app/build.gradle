@@ -39,8 +39,10 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
 
     // Discord
-    implementation 'net.dv8tion:JDA:4.4.0_350'
+    // implementation 'net.dv8tion:JDA:4.4.0_352'
     // implementation 'net.dv8tion:JDA:5.0.0-alpha.21'
+    implementation 'net.dv8tion:JDA:5.0.0-beta.3'
+
 
     testImplementation 'org.assertj:assertj-core:3.23.1'
 }
