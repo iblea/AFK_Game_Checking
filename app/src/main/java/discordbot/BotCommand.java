@@ -1,9 +1,11 @@
 package discordbot;
 
 import java.util.Arrays;
+import java.util.List;
 
-import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.internal.entities.UserById;
 
 public class BotCommand {
 
@@ -37,7 +39,7 @@ public class BotCommand {
 		HELP("help") {
 			@Override
 			public int apply(String msg, MessageReceivedEvent event) {
-				String help_content = "help command test";
+				String help_content = help_command_string();
 				MessageChannel channel = event.getChannel();
 				channel.sendMessage(help_content).queue();
 				return 1;
@@ -57,7 +59,30 @@ public class BotCommand {
 				return 3;
 			}
 		},
-
+		GAME_TEST("test") {
+			@Override
+			public int apply(String msg, MessageReceivedEvent event) {
+				// Snowflakeid
+				long idVar = Long.parseLong(event.getAuthor().getId());
+				System.out.println("user_id: " + idVar);
+				Member member = event.getMember();
+				if (member == null) {
+					System.out.println("member is null");
+					return 4;
+				}
+				Activity activity = getPlaying(member);
+				if (activity == null) {
+					System.out.println("activity is null");
+					return 4;
+				}
+				/* 동일 member 클래스로는 playing a game 업데이트 안됨 */
+				while (activity != null) {
+					System.out.println("activity: " + activity.getName());
+					activity = getPlaying(member);
+				}
+				return 4;
+			}
+		}
 		;
 
 		private final String command_text;
@@ -76,6 +101,23 @@ public class BotCommand {
 
 			return cmd_type.apply(msg, event);
 		}
+	}
+
+	public static String help_command_string()
+	{
+		return """
+웹사이트에서 설정을 진행할 수 있습니다.
+!add - https://gc.iasdf.com
+				""";
+	}
+
+	public static Activity getPlaying(Member discordMember)
+	{
+		List<Activity> activities =  discordMember.getActivities();
+		if (activities.size() > 0) {
+			return activities.get(0);
+		}
+		return null;
 	}
 
 }
