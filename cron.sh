@@ -2,9 +2,10 @@
 
 
 BOT_PATH=/path/to/start.sh
+SCRIPT_NAME="bot.py"
 
 botdir=$(dirname $BOT_PATH)
-proc=$(ps -aef | grep "bot.py" | grep -v "grep")
+proc=$(ps -aef | grep "$SCRIPT_NAME" | grep -v "grep")
 if [ "$proc" = "" ]; then
     if [ -f $BOT_PATH ]; then
         cd "$botdir"
