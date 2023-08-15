@@ -5,6 +5,8 @@ main_script=bot.py
 
 # install
 # python3 -m venv $venv_name
+# if not create 'activate' file
+# python3 -m venv --without-pip $venv_name
 
 source $venv_name/bin/activate
 
