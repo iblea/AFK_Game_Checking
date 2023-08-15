@@ -10,6 +10,8 @@ from os.path import isfile
 
 print("START PROGRAM")
 
+bot = None
+
 config:dict = None
 config_file:str = "config.json"
 
@@ -52,12 +54,14 @@ def get_config() -> bool:
 def set_config() -> None:
     global config
     global config_file
+    global bot
     try:
         with open(config_file, "w") as f:
             json.dump(config, f, indent=4)
     except:
         print("config file save error")
-        exit(1)
+        return False
+    return True
 
 
 if get_config() is False:
@@ -93,6 +97,16 @@ class NewHelp(commands.MinimalHelpCommand):
 특정 사용자가 현재 게임중인지 확인합니다.
 사용자명은 서버의 별명이 아닌 실제 사용자의 이름과 태그를 입력합니다.
 사용자의 아이디가 존재하는 경우 아이디를 입력하고 태그는 0으로 입력합니다. ( ex - !check_game Ib#0 )
+
+!set_schedule 초      (ex - !set_schedule 60)
+모니터링을 진행할 시간을 초 단위로 설정합니다.
+해당 설정을 적용하려면 봇을 재부팅해야 합니다.
+
+!set_repeat 횟수      (ex - !set_repeat 3)
+게임중이 아닐 시 알림을 반복할 횟수를 설정합니다.
+
+!reboot
+봇을 재부팅합니다.
 ```"""
         # emby = discord.Embed(description=help_message)
         # await destination.send(embed=emby)
@@ -133,6 +147,8 @@ schedule_channel = None
 schedule_repeat = config["schedule"]
 if schedule_repeat < 1:
     print("wrong schedule time")
+    if bot is not None:
+        bot.close()
     exit(1)
 
 # n초마다 돌면서 게임중인지 확인
@@ -440,6 +456,7 @@ async def check_game_name(ctx):
 @bot.command()
 async def useradd(ctx):
     global config
+    global bot
     if channel_check(ctx.channel.id) == False:
         return
     userid = parse_mention(ctx, 8)
@@ -470,7 +487,10 @@ async def useradd(ctx):
     user_inform["display_name"] = mem.display_name
     user_inform["tag"] = mem._user.discriminator
     config["users"].append(user_inform)
-    set_config()
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
     msg = print_user_inform(user_inform, "모니터링 대상에 추가되었습니다.")
     await ctx.send(msg)
 
@@ -478,6 +498,7 @@ async def useradd(ctx):
 @bot.command()
 async def userdel(ctx):
     global config
+    global bot
     if channel_check(ctx.channel.id) == False:
         return
     userid = parse_mention(ctx, 8)
@@ -493,11 +514,14 @@ async def userdel(ctx):
     removed_element = None
     try:
         removed_element = config["users"].pop(delindex)
-        set_config()
     except:
         await ctx.send(print_user_inform(config["users"][delindex], "모니터링 대상에서 삭제되었습니다."))
         return
 
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
     await ctx.send(print_user_inform(removed_element, "모니터링 대상에서 삭제되었습니다."))
 
 @bot.command()
@@ -521,6 +545,74 @@ async def userlist(ctx):
     await ctx.send(msg)
     return
 
+@bot.command()
+async def set_schedule(ctx):
+    global config
+    global bot
+    if channel_check(ctx.channel.id) == False:
+        return
+
+    if len(ctx.message.content) <= 13:
+        return
+
+    commands = ctx.message.content[13:]
+    schedule_time = -1
+    try:
+        schedule_time = int(commands)
+    except:
+        await ctx.send("잘못된 명령어입니다")
+        return
+
+    config["schedule"] = schedule_time
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
+
+    await ctx.send("스케쥴이 {}초로 변경되었습니다.\n해당 설정을 적용하려면 봇을 재부팅해야 합니다.".format(schedule_time))
+
+@bot.command()
+async def set_repeat(ctx):
+    global config
+    global bot
+    if channel_check(ctx.channel.id) == False:
+        return
+
+    if len(ctx.message.content) <= 11:
+        return
+
+    commands = ctx.message.content[11:]
+    repeat_time = -1
+    try:
+        repeat_time = int(commands)
+    except:
+        await ctx.send("잘못된 명령어입니다")
+        return
+
+    config["alert_repeat"] = repeat_time
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
+
+    await ctx.send("알림 반복 횟수가 {}회로 변경되었습니다.".format(repeat_time))
+
+
+
+@bot.command()
+async def reboot(ctx):
+    global config
+    global bot
+    if channel_check(ctx.channel.id) == False:
+        return
+    await ctx.send("봇을 재부팅합니다.")
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
+
+    await bot.close()
+    await exit(0)
 
 def main():
     global config
