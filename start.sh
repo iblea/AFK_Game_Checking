@@ -7,7 +7,7 @@ main_script=bot.py
 # python3 -m venv $venv_name
 # if not create 'activate' file
 # python3 -m venv --without-pip $venv_name
-# curl https://bootstrap.pypa.io/get-pip.py | python
+# curl https://bootstrap.pypa.io/get-pip.py | $venv_name/bin/python3
 
 source $venv_name/bin/activate
 
