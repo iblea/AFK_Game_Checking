@@ -1,6 +1,7 @@
 {
     "bot_token": "",
     "bot_channel": 0,
-    "repeat": 3,
+    "alert_repeat": 3,
+    "schedule": 5,
     "users": [ ]
 }

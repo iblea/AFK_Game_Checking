@@ -38,6 +38,14 @@ def get_config() -> bool:
         print("bot_channel is empty")
         return False
 
+    if config["alert_repeat"] < 1:
+        print("wrong alert repeat time")
+        return False
+
+    if config["schedule"] < 1:
+        print("wrong schedule time")
+        return False
+
     return True
 
 
@@ -55,8 +63,6 @@ def set_config() -> None:
 if get_config() is False:
     print("config load error")
     exit(1)
-
-repeat = config["repeat"]
 
 
 class NewHelp(commands.MinimalHelpCommand):
@@ -122,8 +128,14 @@ bot.help_command = NewHelp()
 
 schedule_channel = None
 
+schedule_repeat = config["schedule"]
+if schedule_repeat < 1:
+    print("wrong schedule time")
+    exit(1)
+
 # n초마다 돌면서 게임중인지 확인
-@tasks.loop(seconds=5.0)
+# @tasks.loop(seconds=5.0)
+@tasks.loop(seconds=schedule_repeat)
 async def game_scheduler():
     global schedule_channel
     global config
@@ -303,9 +315,8 @@ def parse_mention(ctx, func_name_index) -> int:
 
 
 async def alert_channel(stat, userid):
-    global repeat
+    global config
     global schedule_channel
-    # for i in range(repeat):
     msg = ""
     if stat == 1:
         msg = "<@{}> 님은 오프라인 입니다. 일어나세요 용사여!".format(userid)
@@ -320,7 +331,9 @@ async def alert_channel(stat, userid):
     if msg == "":
         return
 
-    await schedule_channel.send(msg)
+    repeat:int = config["alert_repeat"]
+    for i in range(repeat):
+        await schedule_channel.send(msg)
 
 
 async def ret_code_with_channel(stat, userid):
