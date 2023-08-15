@@ -71,6 +71,8 @@ class NewHelp(commands.MinimalHelpCommand):
         # for page in self.paginator.pages:
         #     emby = discord.Embed(description=page)
         #     await destination.send(embed=emby)
+        if channel_check(self.context.channel.id) == False:
+            return
         help_message="""봇 명령어
 ```
 !useradd @mention     (ex - !useradd @Ib)
