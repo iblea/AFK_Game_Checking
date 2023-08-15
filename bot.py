@@ -505,7 +505,9 @@ async def userlist(ctx):
     global config
     if channel_check(ctx.channel.id) == False:
         return
-    msg = "모니터링 대상 사용자 리스트\n```"
+    msg = "{} 초 마다 게임을 확인\n".format(config["schedule"])
+    msg += "{} 번 반복하여 알림\n".format(config["alert_repeat"])
+    msg += "모니터링 대상 사용자 리스트\n```"
     users = config["users"]
     if len(users) == 0:
         msg += "모니터링 대상 사용자가 없습니다."
