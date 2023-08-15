@@ -1,5 +1,6 @@
 {
     "bot_token": "",
     "bot_channel": 0,
-    "Users": [ ]
+    "repeat": 3,
+    "users": [ ]
 }
