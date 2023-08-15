@@ -49,3 +49,4 @@ token.txt
 __pycache__/
 discordbot/
 
+config.json
