@@ -178,8 +178,9 @@ async def game_scheduler():
             none_users.append(index)
             continue
         await alert_channel(stat, user["id"])
-        if config["debug_mode"] == True:
-            msg = print_game_inform(member)
+        if config["debug_mode"] == True and stat != 0:
+            msg = "stat : {}\n".format(stat)
+            msg += print_game_inform(member)
             await schedule_channel.send(msg)
 
     if len(none_users) > 0:
