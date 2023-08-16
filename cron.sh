@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-SCRIPT_NAME="bot.py"
 SH_CONFIG="script_config"
 curpath=$(dirname $(realpath $0))
 
