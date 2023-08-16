@@ -179,7 +179,7 @@ async def game_scheduler():
             continue
         await alert_channel(stat, user["id"])
         if config["debug_mode"] == True:
-            msg = print_game_inform(member, user["id"])
+            msg = print_game_inform(member)
             await schedule_channel.send(msg)
 
     if len(none_users) > 0:
@@ -341,33 +341,42 @@ def parse_mention(ctx, func_name_index) -> int:
 
     return userid
 
-def print_game_inform(member, userid) -> str:
+def print_game_inform(member) -> str:
     msg = "게임 상태 정보 출력"
 
     if member is None:
-        msg += "\n해당 유저 정보를 찾을 수 없습니다.".format(userid)
-    elif member.raw_status == "offline":
+        msg += "\n해당 유저 정보를 찾을 수 없습니다."
+        return msg
+
+    userid = member.id
+    if userid is None:
+        msg += "\n유저 아이디를 획득할 수 없습니다."
+        return msg
+
+    if member.raw_status == "offline":
         # print("member is offline")
         msg += "\n<@{}> 님은 오프라인 입니다.".format(userid)
-    elif member.activity is None:
+        return msg
+
+    if member.activity is None:
         # print("member activity is None")
         msg += "\n<@{}> 님은 게임을 하고 있지 않습니다.".format(userid)
+        return msg
 
-    else:
-        msg += "\n<@{}> 님의 게임 상태 정보\n".format(userid)
-        msg += "```\n"
-        for activity in member.activities:
-            msg += "\n"
-            msg += "activity.name : {}\n".format(activity.name)
-            msg += "activity.details : {}\n".format(activity.details)
-            msg += "activity.large_image_text : {}\n".format(activity.large_image_text)
-            msg += "activity.small_image_text : {}\n".format(activity.small_image_text)
-            if activity.assets is None:
-                msg += "activity.assets : None\n"
-            else:
-                msg += "activity.assets['large_text'] : {}\n".format(activity.assets.get("large_text"))
-                msg += "activity.assets['small_text'] : {}\n".format(activity.assets.get("small_text"))
-        msg += "```"
+    msg += "\n<@{}> 님의 게임 상태 정보\n".format(userid)
+    msg += "```\n"
+    for activity in member.activities:
+        msg += "\n"
+        msg += "activity.name : {}\n".format(activity.name)
+        msg += "activity.details : {}\n".format(activity.details)
+        msg += "activity.large_image_text : {}\n".format(activity.large_image_text)
+        msg += "activity.small_image_text : {}\n".format(activity.small_image_text)
+        if activity.assets is None:
+            msg += "activity.assets : None\n"
+        else:
+            msg += "activity.assets['large_text'] : {}\n".format(activity.assets.get("large_text"))
+            msg += "activity.assets['small_text'] : {}\n".format(activity.assets.get("small_text"))
+    msg += "```"
 
     return msg
 
@@ -380,10 +389,10 @@ async def alert_channel(stat, userid):
         msg = "<@{}> 님은 오프라인 입니다. 일어나세요 용사여!".format(userid)
         # msg = "<@{}> is offline. Wake up!!!".format(userid)
     elif stat == 2:
-        msg ="<@{}> 님은 게임을 하고 있지 않습니다. 돌아오세요 용사여!".format(userid)
+        msg ="<@{}> 님 팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
         # msg = "<@{}> is not playing a game. Come back!!!".format(userid)
     elif stat == 3:
-        msg = "<@{}> 님은 다른 게임을 하고 있습니다. 돌아오세요 용사여!".format(userid)
+        msg = "<@{}> 님 팅팅팅팅팅팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
         # msg = "<@{}> is playing a another game. Come back!!!".format(userid)
 
     if msg == "":
@@ -409,10 +418,10 @@ async def ret_code_with_channel(stat, userid):
         msg = "<@{}> 님은 오프라인 입니다. 일어나세요 용사여!".format(userid)
         # msg = "<@{}> is offline. Wake up!!!".format(userid)
     elif stat == 2:
-        msg = "<@{}> 님은 게임을 하고 있지 않습니다. 돌아오세요 용사여!".format(userid)
+        msg ="<@{}> 님 팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
         # msg = "<@{}> is not playing a game. Come back!!!".format(userid)
     elif stat == 3:
-        msg = "<@{}> 님은 다른 게임을 하고 있습니다. 돌아오세요 용사여!".format(userid)
+        msg = "<@{}> 님 팅팅팅팅팅팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
         # msg = "<@{}> is playing a another game. Come back!!!".format(userid)
 
     if msg != "":
@@ -427,10 +436,10 @@ async def ret_code_with_msg(ctx, stat, userid, game_name="growcastle"):
         msg = "<@{}> 님은 오프라인 입니다. 일어나세요 용사여!".format(userid)
         # msg = "<@{}> is offline. Wake up!!!".format(userid)
     elif stat == 2:
-        msg = "<@{}> 님은 게임을 하고 있지 않습니다. 돌아오세요 용사여!".format(userid)
+        msg ="<@{}> 님 팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
         # msg = "<@{}> is not playing a game. Come back!!!".format(userid)
     elif stat == 3:
-        msg = "<@{}> 님은 다른 게임을 하고 있습니다. 돌아오세요 용사여!".format(userid)
+        msg = "<@{}> 님 팅팅팅팅팅팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
         # msg = "<@{}> is playing a another game. Come back!!!".format(userid)
     else:
         msg = "<@{}> 님은 {}중 입니다. 아주 좋아요!".format(userid, game_name)
@@ -470,7 +479,7 @@ async def gamestat(ctx):
         return
 
     member = discord.utils.get(bot.get_all_members(), id=userid)
-    msg = print_game_inform(member, userid)
+    msg = print_game_inform(member)
     await ctx.send(msg)
 
 @bot.command()
