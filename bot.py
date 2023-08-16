@@ -7,6 +7,7 @@ from os.path import isfile
 
 # game_scheduler
 # 게임 이름은 영어일 경우 모두 소문자로, 공백 없이 적어주세요
+# alert_channel
 
 print("START PROGRAM")
 
