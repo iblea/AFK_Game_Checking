@@ -90,6 +90,9 @@ class NewHelp(commands.MinimalHelpCommand):
 !userlist             (ex - !userlist)
 게임 모니터링중인 사용자의 리스트를 조회합니다.
 
+!gamestat @mention  (ex - !gamestat @Ib)
+특정 사용자의 게임 정보를 확인합니다. (디버그용 함수입니다.)
+
 !check_game @mention  (ex - !check_game @Ib)
 특정 사용자가 현재 게임중인지 확인합니다.
 
@@ -419,6 +422,44 @@ async def ret_code_with_msg(ctx, stat, userid, game_name="growcastle"):
 #         else:
 #             await ctx.send("User not found.")
 
+
+@bot.command()
+async def gamestat(ctx):
+    if channel_check(ctx.channel.id) == False:
+        return
+    userid = parse_mention(ctx, 9)
+    if userid < 0:
+        await ctx.send("잘못된 명령어입니다")
+        return
+
+    member = discord.utils.get(bot.get_all_members(), id=userid)
+    msg = "게임 상태 정보 출력"
+    if member is None:
+        msg += "\n해당 유저 정보를 찾을 수 없습니다.".format(userid)
+    elif member.raw_status == "offline":
+        # print("member is offline")
+        msg += "\n<@{}> 님은 오프라인 입니다.".format(userid)
+    elif member.activity is None:
+        # print("member activity is None")
+        msg += "\n<@{}> 님은 게임을 하고 있지 않습니다.".format(userid)
+
+    else:
+        msg += "\n<@{}> 님의 게임 상태 정보\n".format(userid)
+        msg += "```\n"
+        for activity in member.activities:
+            msg += "\n"
+            msg += "activity.name : {}\n".format(activity.name)
+            msg += "activity.details : {}\n".format(activity.details)
+            msg += "activity.large_image_text : {}\n".format(activity.large_image_text)
+            msg += "activity.small_image_text : {}\n".format(activity.small_image_text)
+            if activity.assets is None:
+                msg += "activity.assets : None\n"
+            else:
+                msg += "activity.assets['large_text'] : {}\n".format(activity.assets.get("large_text"))
+                msg += "activity.assets['small_text'] : {}\n".format(activity.assets.get("small_text"))
+        msg += "```"
+
+    await ctx.send(msg)
 
 @bot.command()
 async def check_game(ctx):
