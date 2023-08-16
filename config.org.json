@@ -3,5 +3,6 @@
     "bot_channel": 0,
     "alert_repeat": 3,
     "schedule": 5,
+    "debug_mode": false,
     "users": [ ]
 }

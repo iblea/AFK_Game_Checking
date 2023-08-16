@@ -10,6 +10,8 @@ from os.path import isfile
 
 print("START PROGRAM")
 
+gamename = "growcastle"
+
 bot = None
 
 config:dict = None
@@ -160,6 +162,7 @@ if schedule_repeat < 1:
 async def game_scheduler():
     global schedule_channel
     global config
+    global gamename
 
     if schedule_channel is None:
         schedule_channel = bot.get_channel(config["bot_channel"])
@@ -169,11 +172,15 @@ async def game_scheduler():
     index = -1
     for user in config["users"]:
         index += 1
-        stat = chk_game_id(user["id"], "growcastle")
+        member = discord.utils.get(bot.get_all_members(), id=user["id"])
+        stat:int = chk_game(member, gamename)
         if stat == -1:
             none_users.append(index)
             continue
         await alert_channel(stat, user["id"])
+        if config["debug_mode"] == True:
+            msg = print_game_inform(member, user["id"])
+            await schedule_channel.send(msg)
 
     if len(none_users) > 0:
         del_idx = 0
@@ -334,6 +341,36 @@ def parse_mention(ctx, func_name_index) -> int:
 
     return userid
 
+def print_game_inform(member, userid) -> str:
+    msg = "게임 상태 정보 출력"
+
+    if member is None:
+        msg += "\n해당 유저 정보를 찾을 수 없습니다.".format(userid)
+    elif member.raw_status == "offline":
+        # print("member is offline")
+        msg += "\n<@{}> 님은 오프라인 입니다.".format(userid)
+    elif member.activity is None:
+        # print("member activity is None")
+        msg += "\n<@{}> 님은 게임을 하고 있지 않습니다.".format(userid)
+
+    else:
+        msg += "\n<@{}> 님의 게임 상태 정보\n".format(userid)
+        msg += "```\n"
+        for activity in member.activities:
+            msg += "\n"
+            msg += "activity.name : {}\n".format(activity.name)
+            msg += "activity.details : {}\n".format(activity.details)
+            msg += "activity.large_image_text : {}\n".format(activity.large_image_text)
+            msg += "activity.small_image_text : {}\n".format(activity.small_image_text)
+            if activity.assets is None:
+                msg += "activity.assets : None\n"
+            else:
+                msg += "activity.assets['large_text'] : {}\n".format(activity.assets.get("large_text"))
+                msg += "activity.assets['small_text'] : {}\n".format(activity.assets.get("small_text"))
+        msg += "```"
+
+    return msg
+
 
 async def alert_channel(stat, userid):
     global config
@@ -433,36 +470,13 @@ async def gamestat(ctx):
         return
 
     member = discord.utils.get(bot.get_all_members(), id=userid)
-    msg = "게임 상태 정보 출력"
-    if member is None:
-        msg += "\n해당 유저 정보를 찾을 수 없습니다.".format(userid)
-    elif member.raw_status == "offline":
-        # print("member is offline")
-        msg += "\n<@{}> 님은 오프라인 입니다.".format(userid)
-    elif member.activity is None:
-        # print("member activity is None")
-        msg += "\n<@{}> 님은 게임을 하고 있지 않습니다.".format(userid)
-
-    else:
-        msg += "\n<@{}> 님의 게임 상태 정보\n".format(userid)
-        msg += "```\n"
-        for activity in member.activities:
-            msg += "\n"
-            msg += "activity.name : {}\n".format(activity.name)
-            msg += "activity.details : {}\n".format(activity.details)
-            msg += "activity.large_image_text : {}\n".format(activity.large_image_text)
-            msg += "activity.small_image_text : {}\n".format(activity.small_image_text)
-            if activity.assets is None:
-                msg += "activity.assets : None\n"
-            else:
-                msg += "activity.assets['large_text'] : {}\n".format(activity.assets.get("large_text"))
-                msg += "activity.assets['small_text'] : {}\n".format(activity.assets.get("small_text"))
-        msg += "```"
-
+    msg = print_game_inform(member, userid)
     await ctx.send(msg)
 
 @bot.command()
 async def check_game(ctx):
+    global gamename
+
     if channel_check(ctx.channel.id) == False:
         return
     userid = parse_mention(ctx, 11)
@@ -470,12 +484,13 @@ async def check_game(ctx):
         await ctx.send("잘못된 명령어입니다")
         return
 
-    game_name = "growcastle"
-    stat:int = chk_game_id(int(userid), game_name)
+    stat:int = chk_game_id(int(userid), gamename)
     await ret_code_with_msg(ctx, stat, userid)
 
 @bot.command()
 async def check_game_name(ctx):
+    global gamename
+
     if channel_check(ctx.channel.id) == False:
         return
     commands = ctx.message.content[17:]
@@ -489,8 +504,7 @@ async def check_game_name(ctx):
         return
 
     userid = mem.id
-    game_name = "growcastle"
-    stat:int = chk_game(mem, game_name)
+    stat:int = chk_game(mem, gamename)
     await ret_code_with_msg(ctx, stat, userid)
 
 
