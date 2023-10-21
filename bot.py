@@ -27,9 +27,7 @@ config:dict = None
 config_file:str = "config.json"
 
 def is_use_telegram(config):
-    print(config["telegram"])
     if 'telegram' not in config:
-        print("1")
         return False
     if 'bot_token' not in config["telegram"]:
         return False
@@ -638,7 +636,7 @@ async def useradd(ctx, func_len=8):
     global bot
     if channel_check(ctx.channel.id) == False:
         return
-    print(ctx.message.content)
+    # print(ctx.message.content)
     userid = parse_mention(ctx, func_len)
     if userid < 0:
         await ctx.send("잘못된 명령어입니다")
@@ -676,7 +674,7 @@ async def useradd(ctx, func_len=8):
 
 @bot.command()
 async def ua(ctx):
-    await useradd(ctx, 4)
+    await useradd(ctx, 3)
 
 
 @bot.command()
@@ -710,7 +708,7 @@ async def userdel(ctx, func_len=8):
 
 @bot.command()
 async def ud(ctx):
-    await userdel(ctx, 4)
+    await userdel(ctx, 3)
 
 
 @bot.command()
