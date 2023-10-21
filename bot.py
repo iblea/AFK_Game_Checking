@@ -37,6 +37,8 @@ def is_use_telegram(config):
         return False
     if config["telegram"]["chat_id"] == 0:
         return False
+    if config["telegram"]["alert_repeat"] == 0:
+        return False
     return True
 
 
@@ -153,7 +155,7 @@ def telegram_thread():
         sleep(1)
         if not tg_user:
             continue
-        repeat = config["alert_repeat"]
+        repeat = config["telegram"]["alert_repeat"]
         userkeys = list(tg_user.keys())
         for key in userkeys:
             loop = asyncio.get_event_loop()
