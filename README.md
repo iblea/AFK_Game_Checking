@@ -3,6 +3,7 @@
 - `>= python3.10`
 - `>= pip23.0.1`
 - `discord`
+- `telegram`
 - `venv`
 
 
@@ -18,6 +19,7 @@ python3 -m venv discordbot
 ```bash
 source discordbot/bin/activate
 discordbot/bin/pip3 install discord
+discordbot/bin/pip3 install python-telegram-bot --upgrade
 deactivate
 ```
 
