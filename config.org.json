@@ -6,7 +6,7 @@
     "debug_mode": false,
     "telegram": {
         "bot_token": "",
-        "chat_id": ""
+        "chat_id": 0
     },
     "users": [ ]
 }
