@@ -4,6 +4,7 @@ import discord
 from discord.ext import tasks, commands
 import json
 from os.path import isfile
+from time import sleep
 
 # game_scheduler
 # 게임 이름은 영어일 경우 모두 소문자로, 공백 없이 적어주세요
@@ -13,14 +14,38 @@ print("START PROGRAM")
 
 gamename = "growcastle"
 
+# discord
 bot = None
+
+# telegram
+use_telegram = False
+tg_bot = None
+tg_chatid = -1
+tg_user = {}
 
 config:dict = None
 config_file:str = "config.json"
 
+def is_use_telegram(config):
+    print(config["telegram"])
+    if 'telegram' not in config:
+        print("1")
+        return False
+    if 'bot_token' not in config["telegram"]:
+        return False
+    if 'chat_id' not in config["telegram"]:
+        return False
+    if config["telegram"]["bot_token"] == "":
+        return False
+    if config["telegram"]["chat_id"] == 0:
+        return False
+    return True
+
+
 def get_config() -> bool:
     global config
     global config_file
+    global use_telegram
     if isfile(config_file) is False:
         print("config file is not exist")
         return False
@@ -47,6 +72,11 @@ def get_config() -> bool:
         print("wrong alert repeat time")
         return False
 
+    if is_use_telegram(config):
+        use_telegram = True
+    else:
+        use_telegram = False
+
     if config["schedule"] < 1:
         print("wrong schedule time")
         return False
@@ -72,6 +102,92 @@ if get_config() is False:
     exit(1)
 
 
+def msg_stat(stat:int, userid:int, username:str="") -> str:
+    msg:str = ""
+    condition_msg:str = ""
+    if stat == -1:
+        return "존재하지 않는 사용자 입니다."
+    if stat == 1:
+        condition_msg = "({})님은 오프라인 입니다. 일어나세요 용사여!".format(username)
+        # msg = "<@{}> is offline. Wake up!!!".format(userid)
+    elif stat == 2:
+        condition_msg ="({})님 팅팅팅팅팅. 돌아오세요 용사여!".format(username)
+        # msg = "<@{}> is not playing a game. Come back!!!".format(userid)
+    elif stat == 3:
+        condition_msg = "({})님 팅팅팅팅팅팅팅팅팅팅. 돌아오세요 용사여!".format(username)
+        # msg = "<@{}> is playing a another game. Come back!!!".format(userid)
+    else:
+        return ""
+
+    if userid != 0:
+        msg = "<@{}> ".format(userid)
+
+    msg += condition_msg
+    return msg
+
+
+
+async def telegram_msg_send(msg_str, cnt = 1):
+    global tg_bot
+    global tg_chatid
+    global use_telegram
+
+    if use_telegram is False:
+        return
+    if tg_bot is None:
+        return
+    if tg_chatid < 0:
+        return
+
+    if msg_str == "":
+        return
+
+    for i in range(cnt):
+        await tg_bot.sendMessage(chat_id=tg_chatid, text=msg_str)
+        # await asyncio.sleep(0.5)
+
+def telegram_thread():
+    global tg_user
+    global config
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    while True:
+        sleep(1)
+        if not tg_user:
+            continue
+        repeat = config["alert_repeat"]
+        userkeys = list(tg_user.keys())
+        for key in userkeys:
+            loop = asyncio.get_event_loop()
+            msg = msg_stat(tg_user[key], 0, key)
+            loop.run_until_complete(telegram_msg_send(msg, repeat))
+            del tg_user[key]
+
+    # 사실상 죽은 코드
+    loop.close()
+
+if use_telegram:
+    try:
+        import telegram
+        import asyncio
+        import threading
+        print("Use Telegram")
+        tg_bot = telegram.Bot(token=config["telegram"]["bot_token"])
+        tg_chatid = config["telegram"]["chat_id"]
+        print("Use Telegram!, Setting Success")
+
+        telegram_thread = threading.Thread(target=telegram_thread)
+        telegram_thread.daemon = True
+        telegram_thread.start()
+    except Exception as e:
+        print(e)
+        print("Telegram set Error")
+        tg_bot = None
+        tg_chatid = -1
+        use_telegram = False
+else:
+    print("Telegram not use.")
+
 class NewHelp(commands.MinimalHelpCommand):
     async def send_pages(self):
         destination = self.get_destination()
@@ -85,10 +201,12 @@ class NewHelp(commands.MinimalHelpCommand):
 !useradd @mention     (ex - !useradd @Ib)
 게임 모니터링을 진행할 사용자를 추가합니다.
 멘션 없이 사용시 명령을 입력한 사용자를 추가합니다.
+!ua 로 줄여 사용할 수 있습니다.
 
 !userdel @mention     (ex - !userdel @Ib)
 게임 모니터링중인 사용자를 삭제합니다.
 멘션 없이 사용시 명령을 입력한 사용자를 삭제합니다.
+!ud 로 줄여 사용할 수 있습니다.
 
 !userlist             (ex - !userlist)
 게임 모니터링중인 사용자의 리스트를 조회합니다.
@@ -178,7 +296,8 @@ async def game_scheduler():
         if stat == -1:
             none_users.append(index)
             continue
-        await alert_channel(stat, user["id"])
+        # await alert_channel(stat, user["id"], user['display_name'], user['tag'])
+        await alert_channel(stat, member.id, member.display_name, member.discriminator)
         if config["debug_mode"] == True and stat != 0:
             msg = "stat : {}\n".format(stat)
             msg += print_game_inform(member)
@@ -382,71 +501,64 @@ def print_game_inform(member) -> str:
 
     return msg
 
+async def add_tguser(username, stat):
+    global use_telegram
+    global tg_user
 
-async def alert_channel(stat, userid):
+    if use_telegram is False:
+        return
+
+    if username == "":
+        return
+
+    if username not in tg_user:
+        tg_user[username] = stat
+
+# alert 할 때에만 telegram에 알람을 날린다.
+async def alert_channel(stat, userid, username = "", usertag = "0"):
     global config
     global schedule_channel
-    msg = ""
-    if stat == 1:
-        msg = "<@{}> 님은 오프라인 입니다. 일어나세요 용사여!".format(userid)
-        # msg = "<@{}> is offline. Wake up!!!".format(userid)
-    elif stat == 2:
-        msg ="<@{}> 님 팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
-        # msg = "<@{}> is not playing a game. Come back!!!".format(userid)
-    elif stat == 3:
-        msg = "<@{}> 님 팅팅팅팅팅팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
-        # msg = "<@{}> is playing a another game. Come back!!!".format(userid)
 
+    if usertag != "0":
+        username += ("#" + usertag)
+
+    msg = msg_stat(stat, userid, username)
     if msg == "":
         return
 
     repeat:int = config["alert_repeat"]
+    await add_tguser(username, stat)
     for i in range(repeat):
+        # telegram_msg_send(msg)
         await schedule_channel.send(msg)
 
 
-async def ret_code_with_channel(stat, userid):
+async def ret_code_with_channel(stat, userid, username = "", usertag = "0"):
     global schedule_channel
 
     if schedule_channel is None:
         schedule_channel = bot.get_channel(config["bot_channel"])
         return
 
-    msg = ""
-    if stat == -1:
-        msg = "존재하지 않는 사용자입니다"
-        # msg = "no user"
-    elif stat == 1:
-        msg = "<@{}> 님은 오프라인 입니다. 일어나세요 용사여!".format(userid)
-        # msg = "<@{}> is offline. Wake up!!!".format(userid)
-    elif stat == 2:
-        msg ="<@{}> 님 팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
-        # msg = "<@{}> is not playing a game. Come back!!!".format(userid)
-    elif stat == 3:
-        msg = "<@{}> 님 팅팅팅팅팅팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
-        # msg = "<@{}> is playing a another game. Come back!!!".format(userid)
+    if usertag != "0":
+        username += ("#" + usertag)
 
+    msg = msg_stat(stat, userid, username)
     if msg != "":
+        await add_tguser(username, stat)
         await schedule_channel.send(msg)
 
-async def ret_code_with_msg(ctx, stat, userid, game_name="growcastle"):
+async def ret_code_with_msg(ctx, stat, userid, game_name="growcastle", username = "", usertag = "0"):
     msg = ""
-    if stat == -1:
-        msg = "존재하지 않는 사용자입니다"
-        # msg = "no user"
-    elif stat == 1:
-        msg = "<@{}> 님은 오프라인 입니다. 일어나세요 용사여!".format(userid)
-        # msg = "<@{}> is offline. Wake up!!!".format(userid)
-    elif stat == 2:
-        msg ="<@{}> 님 팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
-        # msg = "<@{}> is not playing a game. Come back!!!".format(userid)
-    elif stat == 3:
-        msg = "<@{}> 님 팅팅팅팅팅팅팅팅팅팅. 돌아오세요 용사여!".format(userid)
-        # msg = "<@{}> is playing a another game. Come back!!!".format(userid)
-    else:
-        msg = "<@{}> 님은 {}중 입니다. 아주 좋아요!".format(userid, game_name)
-        # msg = "<@{}> is playing {}. very good!!!".format(userid, game_name)
+    if usertag != "0":
+        username += ("#" + usertag)
 
+    if stat == 0:
+        msg = "<@{}> ({})님은 {}중 입니다. 아주 좋아요!".format(userid, username, game_name)
+    else:
+        msg = msg_stat(stat, userid, username)
+
+    await add_tguser(username, stat)
     await ctx.send(msg)
 
 
@@ -516,16 +628,18 @@ async def check_game_name(ctx):
 
     userid = mem.id
     stat:int = chk_game(mem, gamename)
-    await ret_code_with_msg(ctx, stat, userid)
+    # await ret_code_with_msg(ctx, stat, userid)
+    await ret_code_with_msg(ctx, stat, mem.id, mem.display_name, mem.discriminator)
 
 
 @bot.command()
-async def useradd(ctx):
+async def useradd(ctx, func_len=8):
     global config
     global bot
     if channel_check(ctx.channel.id) == False:
         return
-    userid = parse_mention(ctx, 8)
+    print(ctx.message.content)
+    userid = parse_mention(ctx, func_len)
     if userid < 0:
         await ctx.send("잘못된 명령어입니다")
         return
@@ -560,14 +674,18 @@ async def useradd(ctx):
     msg = print_user_inform(user_inform, "모니터링 대상에 추가되었습니다.")
     await ctx.send(msg)
 
+@bot.command()
+async def ua(ctx):
+    await useradd(ctx, 4)
+
 
 @bot.command()
-async def userdel(ctx):
+async def userdel(ctx, func_len=8):
     global config
     global bot
     if channel_check(ctx.channel.id) == False:
         return
-    userid = parse_mention(ctx, 8)
+    userid = parse_mention(ctx, func_len)
     if userid < 0:
         await ctx.send("잘못된 명령어입니다")
         return
@@ -589,6 +707,11 @@ async def userdel(ctx):
         await bot.close()
         await exit(1)
     await ctx.send(print_user_inform(removed_element, "모니터링 대상에서 삭제되었습니다."))
+
+@bot.command()
+async def ud(ctx):
+    await userdel(ctx, 4)
+
 
 @bot.command()
 async def userlist(ctx):
