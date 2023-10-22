@@ -294,6 +294,7 @@ async def game_scheduler():
         index += 1
         none_flag = False
         alert_list = []
+        debug_msg = ""
         for i in range(len(user["id"])):
             member = discord.utils.get(bot.get_all_members(), id=user["id"][i])
             stat:int = chk_game(member, gamename)
@@ -306,13 +307,16 @@ async def game_scheduler():
                 alert_list = []
                 break
             alert_list.append([stat, member.id, member.display_name, member.discriminator])
+            if config["debug_mode"] == True:
+                debug_msg += "stat : {}\n".format(stat)
+                debug_msg += print_game_inform(member)
+                debug_msg += "\n"
+
         if none_flag is True:
             continue
         await alert_channel_list(alert_list)
-        if config["debug_mode"] == True and stat != 0:
-            msg = "stat : {}\n".format(stat)
-            msg += print_game_inform(member)
-            await schedule_channel.send(msg)
+        if debug_msg != "":
+            await schedule_channel.send(debug_msg)
 
     if len(none_users) > 0:
         del_idx = 0
