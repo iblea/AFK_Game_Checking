@@ -289,15 +289,26 @@ async def game_scheduler():
 
     none_users = []
     index = -1
+    none_flag = False
     for user in config["users"]:
         index += 1
-        member = discord.utils.get(bot.get_all_members(), id=user["id"])
-        stat:int = chk_game(member, gamename)
-        if stat == -1:
-            none_users.append(index)
+        none_flag = False
+        alert_list = []
+        for i in range(len(user["id"])):
+            member = discord.utils.get(bot.get_all_members(), id=user["id"][i])
+            stat:int = chk_game(member, gamename)
+            if stat == -1:
+                none_users.append(index)
+                none_flag = True
+                break
+            # 리스트 인원 중 한명이라도 해당 게임을 하고 있으면 해당 유저는 게임을 하고 있다고 간주 (부계정)
+            if stat == 0:
+                alert_list = []
+                break
+            alert_list.append([stat, member.id, member.display_name, member.discriminator])
+        if none_flag is True:
             continue
-        # await alert_channel(stat, user["id"], user['display_name'], user['tag'])
-        await alert_channel(stat, member.id, member.display_name, member.discriminator)
+        await alert_channel_list(alert_list)
         if config["debug_mode"] == True and stat != 0:
             msg = "stat : {}\n".format(stat)
             msg += print_game_inform(member)
@@ -417,15 +428,17 @@ def chk_game_id(member_id, game_name) -> int:
     mem = discord.utils.get(bot.get_all_members(), id=member_id)
     return chk_game(mem, game_name)
 
-def getid_with_mention(mention) -> int:
-    user = mention[2:-1]
-    real_id = -1
-    try:
-        real_id = int(user)
-    except:
-        return -1
+def getid_with_mention(mention) -> list:
+    output = []
+    usrlist = mention.split(' ')
+    for userstr in usrlist:
+        user = userstr[2:-1]
+        try:
+            output.append(int(user))
+        except:
+            pass
 
-    return real_id
+    return output
 
 def find_user_with_id(userid) -> any:
     global config
@@ -446,16 +459,26 @@ def get_userindex_with_id(userid) -> int:
 def print_user_inform(userdict, alert_msg) -> str:
     msg = """{}
 ```
-실제 이름 : {}#{}
-서버 내 별명 : {}#{}
-```""".format(alert_msg, userdict['name'], userdict["tag"]
-              ,userdict['display_name'], userdict['tag'])
+""".format(alert_msg)
+
+    realname = "\n실제 이름 : "
+    nickname = "\n서버 내 별명 : "
+    for i in range(len(userdict["name"])):
+        realname += "{}#{}, ".format(userdict["name"][i], userdict["tag"][i])
+        nickname += "{}#{}, ".format(userdict['display_name'][i], userdict['tag'][i])
+    realname = realname[:-2]
+    nickname = nickname[:-2]
+    msg += realname
+    msg += nickname
+
+    msg += "\n```"
     return msg
 
-def parse_mention(ctx, func_name_index) -> int:
+def parse_mention(ctx, func_name_index) -> list:
     # id 획득
+    userid = []
     if len(ctx.message.content) == func_name_index:
-        userid = ctx.author.id
+        userid.append(ctx.author.id)
     else:
         commands = ctx.message.content[func_name_index + 1:]
         userid = getid_with_mention(commands)
@@ -532,6 +555,28 @@ async def alert_channel(stat, userid, username = "", usertag = "0"):
         # telegram_msg_send(msg)
         await schedule_channel.send(msg)
 
+async def alert_channel_list(alert_list):
+    global config
+    global schedule_channel
+    if len(alert_list) == 0:
+        return
+    msg = ""
+    for i in range(len(alert_list)):
+        stat = alert_list[i][0]
+        userid = alert_list[i][1]
+        username = alert_list[i][2]
+        usertag = alert_list[i][3]
+        if usertag != "0":
+            username += ("#" + usertag)
+        msg += msg_stat(stat, userid, username)
+        msg += "\n"
+        await add_tguser(username, stat)
+
+    repeat:int = config["alert_repeat"]
+    for i in range(repeat):
+        # telegram_msg_send(msg)
+        await schedule_channel.send(msg)
+
 
 async def ret_code_with_channel(stat, userid, username = "", usertag = "0"):
     global schedule_channel
@@ -588,11 +633,11 @@ async def gamestat(ctx):
     if channel_check(ctx.channel.id) == False:
         return
     userid = parse_mention(ctx, 9)
-    if userid < 0:
+    if len(userid) <= 0:
         await ctx.send("잘못된 명령어입니다")
         return
 
-    member = discord.utils.get(bot.get_all_members(), id=userid)
+    member = discord.utils.get(bot.get_all_members(), id=userid[0])
     msg = print_game_inform(member)
     await ctx.send(msg)
 
@@ -603,12 +648,12 @@ async def check_game(ctx):
     if channel_check(ctx.channel.id) == False:
         return
     userid = parse_mention(ctx, 11)
-    if userid < 0:
+    if len(userid) <= 0:
         await ctx.send("잘못된 명령어입니다")
         return
 
-    stat:int = chk_game_id(int(userid), gamename)
-    await ret_code_with_msg(ctx, stat, userid)
+    stat:int = chk_game_id(int(userid[0]), gamename)
+    await ret_code_with_msg(ctx, stat, userid[0])
 
 @bot.command()
 async def check_game_name(ctx):
@@ -631,42 +676,50 @@ async def check_game_name(ctx):
     # await ret_code_with_msg(ctx, stat, userid)
     await ret_code_with_msg(ctx, stat, mem.id, mem.display_name, mem.discriminator)
 
-
-@bot.command()
-async def useradd(ctx, func_len=8):
+async def useradd_function(ctx, func_len):
     global config
     global bot
     if channel_check(ctx.channel.id) == False:
         return
     # print(ctx.message.content)
-    userid = parse_mention(ctx, func_len)
-    if userid < 0:
+    userids = parse_mention(ctx, func_len)
+    if len(userids) <= 0:
         await ctx.send("잘못된 명령어입니다")
+        return
+    if len(userids) > 3:
+        await ctx.send("최대 3명까지 등록이 가능합니다.")
         return
 
     # 이미 있는 사용자인지 확인
-    user = find_user_with_id(userid)
+    user = find_user_with_id(userids)
     if user is not None:
         msg = print_user_inform(user, "이미 모니터링 대상에 포함되어 있는 사용자입니다.")
         await ctx.send(msg)
         return
 
-    # 사용자 정보 획득
-    mem = discord.utils.get(bot.get_all_members(), id=userid)
-    if mem is None:
-        await ctx.send("존재하지 않는 사용자입니다")
-        return
-    if mem._user is None:
-        await ctx.send("해당 사용자의 정보를 찾을 수 없습니다")
-        return
-
-    # 추가
+    # 초기화
     user_inform = {}
-    user_inform['id'] = mem.id
-    user_inform['name'] = mem._user.name
-    user_inform["display_name"] = mem.display_name
-    user_inform["tag"] = mem._user.discriminator
+    user_inform['id'] = [ ]
+    user_inform['name'] = [ ]
+    user_inform["display_name"] = [ ]
+    user_inform["tag"] = [ ]
+
+    for userid in userids:
+        # 사용자 정보 획득
+        mem = discord.utils.get(bot.get_all_members(), id=userid)
+        if mem is None:
+            await ctx.send("존재하지 않는 사용자입니다")
+            return
+        if mem._user is None:
+            await ctx.send("해당 사용자의 정보를 찾을 수 없습니다")
+            return
+        user_inform['id'].append(mem.id)
+        user_inform['name'].append(mem._user.name)
+        user_inform["display_name"].append(mem.display_name)
+        user_inform["tag"].append(mem._user.discriminator)
+
     config["users"].append(user_inform)
+
     if set_config() == False:
         ctx.send("저장에 실패하였습니다.")
         await bot.close()
@@ -674,19 +727,23 @@ async def useradd(ctx, func_len=8):
     msg = print_user_inform(user_inform, "모니터링 대상에 추가되었습니다.")
     await ctx.send(msg)
 
+
+@bot.command()
+async def useradd(ctx):
+    await useradd_function(ctx, 8)
+
 @bot.command()
 async def ua(ctx):
-    await useradd(ctx, 3)
+    await useradd_function(ctx, 3)
 
 
-@bot.command()
-async def userdel(ctx, func_len=8):
+async def userdel_function(ctx, func_len):
     global config
     global bot
     if channel_check(ctx.channel.id) == False:
         return
     userid = parse_mention(ctx, func_len)
-    if userid < 0:
+    if len(userid) <= 0:
         await ctx.send("잘못된 명령어입니다")
         return
 
@@ -709,8 +766,12 @@ async def userdel(ctx, func_len=8):
     await ctx.send(print_user_inform(removed_element, "모니터링 대상에서 삭제되었습니다."))
 
 @bot.command()
+async def userdel(ctx):
+    await userdel_function(ctx, 8)
+
+@bot.command()
 async def ud(ctx):
-    await userdel(ctx, 3)
+    await userdel_function(ctx, 3)
 
 
 @bot.command()
@@ -726,8 +787,15 @@ async def userlist(ctx):
         msg += "모니터링 대상 사용자가 없습니다."
     else:
         for user in users:
-            msg += "\n실제 이름 : {}#{}\n".format(user["name"], user["tag"])
-            msg += "서버 내 별명 : {}#{}\n".format(user['display_name'], user['tag'])
+            realname = "\n실제 이름 : "
+            nickname = "\n서버 내 별명 : "
+            for i in range(len(user["name"])):
+                realname += "{}#{}, ".format(user["name"][i], user["tag"][i])
+                nickname += "{}#{}, ".format(user['display_name'][i], user['tag'][i])
+            realname = realname[:-2]
+            nickname = nickname[:-2]
+            msg += realname
+            msg += nickname
 
 
     msg += "```"
