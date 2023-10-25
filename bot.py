@@ -305,6 +305,7 @@ async def game_scheduler():
             # 리스트 인원 중 한명이라도 해당 게임을 하고 있으면 해당 유저는 게임을 하고 있다고 간주 (부계정)
             if stat == 0:
                 alert_list = []
+                debug_msg = ""
                 break
             alert_list.append([stat, member.id, member.display_name, member.discriminator])
             if config["debug_mode"] == True:
