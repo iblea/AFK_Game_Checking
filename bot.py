@@ -407,6 +407,10 @@ def chk_game(member, game_name) -> int:
         return 2
 
     for activity in member.activities:
+        # 활동 상태만 검사한다.
+        if isinstance(activity, discord.activity.Activity) is not True:
+            # print(isinstance(activity, discord.activity.Game))
+            continue
         if diff_game(activity.name, game_name):
             return 0
         if diff_game(activity.details, game_name):
@@ -520,6 +524,9 @@ def print_game_inform(member) -> str:
     msg += "\n<@{}> 님의 게임 상태 정보\n".format(userid)
     msg += "```\n"
     for activity in member.activities:
+        if isinstance(activity, discord.activity.Activity) is not True:
+            msg += "not activity status"
+            continue
         msg += "\n"
         msg += "activity.name : {}\n".format(activity.name)
         msg += "activity.details : {}\n".format(activity.details)
