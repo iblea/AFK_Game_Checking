@@ -37,8 +37,6 @@ def is_use_telegram(config):
         return False
     if config["telegram"]["chat_id"] == 0:
         return False
-    if config["telegram"]["alert_repeat"] == 0:
-        return False
     return True
 
 
@@ -127,6 +125,9 @@ def msg_stat(stat:int, userid:int, username:str="") -> str:
 
 
 
+# bot will not be able to send more than 20 messages per minute to the same group.
+# telegram은 분당 20 req 이상의 요청을 보낼 수 없다.
+# 또한 초당 두개 이상의 메시지를 보낼 수 없다. (이러한 burst 형식의 메시지를 보낼 시 429 오류 발생)
 async def telegram_msg_send(msg_str, cnt = 1):
     global tg_bot
     global tg_chatid
@@ -152,16 +153,20 @@ def telegram_thread():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     while True:
+        # WARNING: sleep 1초시 초당 1회 요청이라 429 too many requests 로 차단될 가능성 있음.
         sleep(1)
         if not tg_user:
             continue
-        repeat = config["telegram"]["alert_repeat"]
         userkeys = list(tg_user.keys())
+        msg = ""
         for key in userkeys:
             loop = asyncio.get_event_loop()
-            msg = msg_stat(tg_user[key], 0, key)
-            loop.run_until_complete(telegram_msg_send(msg, repeat))
+            msg += msg_stat(tg_user[key], 0, key)
+            msg += "\n"
             del tg_user[key]
+
+        # 초당 2번 이상 메시지를 날리면 오류 난다.
+        loop.run_until_complete(telegram_msg_send(msg))
 
     # 사실상 죽은 코드
     loop.close()
