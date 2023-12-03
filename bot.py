@@ -23,6 +23,12 @@ tg_bot = None
 tg_chatid = -1
 tg_user = {}
 
+# 첫 번째 튕긴 시점 확인을 위한 cnt 체크
+# 기기변경을 위해 1분가량 접속이 안될 수 있으므로 첫 알림은 튕긴 시점에서 1분 뒤에 울리도록 한다.
+
+first_alert_dict = {}
+first_alert_interval = 10
+
 config:dict = None
 config_file:str = "config.json"
 
@@ -44,6 +50,7 @@ def get_config() -> bool:
     global config
     global config_file
     global use_telegram
+    global first_alert_interval
     if isfile(config_file) is False:
         print("config file is not exist")
         return False
@@ -79,6 +86,25 @@ def get_config() -> bool:
         print("wrong schedule time")
         return False
 
+    if config["first_alert_interval"] < 1:
+        print("wrong first_alert_interval time")
+        return False
+
+    try:
+        schedule_int = int(config["schedule"])
+        first_alert_interval_int = int(config["first_alert_interval"])
+        if first_alert_interval_int % schedule_int == 0:
+            first_alert_interval = first_alert_interval_int // schedule_int
+        else:
+            first_alert_interval = first_alert_interval_int // schedule_int
+
+        if first_alert_interval <= 0:
+            print("first alert interval 값이 schedule 보다 작을 수 없습니다.")
+            return False
+    except Exception:
+        return False
+
+    print(first_alert_interval)
     return True
 
 
@@ -287,6 +313,7 @@ async def game_scheduler():
     global schedule_channel
     global config
     global gamename
+    global first_alert_dict
 
     if schedule_channel is None:
         schedule_channel = bot.get_channel(config["bot_channel"])
@@ -300,6 +327,13 @@ async def game_scheduler():
         none_flag = False
         alert_list = []
         debug_msg = ""
+
+        key = ""
+        for i in range(len(user["id"])):
+            key += (str(user["id"][i]) + "|")
+        if key not in first_alert_dict:
+            first_alert_dict[key] = 0
+
         for i in range(len(user["id"])):
             member = discord.utils.get(bot.get_all_members(), id=user["id"][i])
             stat:int = chk_game(member, gamename)
@@ -320,9 +354,17 @@ async def game_scheduler():
 
         if none_flag is True:
             continue
-        await alert_channel_list(alert_list)
-        if debug_msg != "":
-            await schedule_channel.send(debug_msg)
+
+        if len(alert_list) == 0:
+            first_alert_dict[key] = 0
+        else:
+            first_alert_dict[key] += 1
+
+        if first_alert_dict[key] >= first_alert_interval:
+            first_alert_dict[key] = first_alert_interval
+            await alert_channel_list(alert_list)
+            if debug_msg != "":
+                await schedule_channel.send(debug_msg)
 
     if len(none_users) > 0:
         del_idx = 0
@@ -757,9 +799,18 @@ async def ua(ctx):
 async def userdel_function(ctx, func_len):
     global config
     global bot
+    global first_alert_dict
+
     if channel_check(ctx.channel.id) == False:
         return
     userid = parse_mention(ctx, func_len)
+
+    key = ""
+    for userid_str in userid:
+        key += (str(userid_str) + "|")
+    if key in first_alert_dict:
+        del first_alert_dict[key]
+
     if len(userid) <= 0:
         await ctx.send("잘못된 명령어입니다")
         return

@@ -1,8 +1,9 @@
 {
     "bot_token": "",
     "bot_channel": 0,
-    "alert_repeat": 3,
+    "alert_repeat": 1,
     "schedule": 5,
+    "first_alert_interval": 90,
     "debug_mode": false,
     "telegram": {
         "bot_token": "",
