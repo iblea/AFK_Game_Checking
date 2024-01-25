@@ -449,25 +449,33 @@ def chk_game(member, game_name) -> int:
         return 2
 
     for activity in member.activities:
-        # 활동 상태만 검사한다.
-        if isinstance(activity, discord.activity.Activity) is not True:
-            # print(isinstance(activity, discord.activity.Game))
+        if isinstance(activity, discord.activity.Game) is True:
+            if diff_game(activity.name, game_name):
+                return 0
+
             continue
-        if diff_game(activity.name, game_name):
-            return 0
-        if diff_game(activity.details, game_name):
-            return 0
-        if diff_game(activity.state, game_name):
-            return 0
-        if diff_game(activity.large_image_text, game_name):
-            return 0
-        if diff_game(activity.small_image_text, game_name):
-            return 0
-        if activity.assets is not None:
-            if diff_game(activity.assets.get("large_text"), game_name):
+
+        # 활동 상태에 따라 검사 방식이 다르다.
+        elif isinstance(activity, discord.activity.Activity) is True:
+            # print(isinstance(activity, discord.activity.Game))
+            if diff_game(activity.name, game_name):
                 return 0
-            if diff_game(activity.assets.get("small_text"), game_name):
+            if diff_game(activity.details, game_name):
                 return 0
+            if diff_game(activity.state, game_name):
+                return 0
+            if diff_game(activity.large_image_text, game_name):
+                return 0
+            if diff_game(activity.small_image_text, game_name):
+                return 0
+            if activity.assets is not None:
+                if diff_game(activity.assets.get("large_text"), game_name):
+                    return 0
+                if diff_game(activity.assets.get("small_text"), game_name):
+                    return 0
+
+            continue
+
 
     return 3
 
@@ -566,19 +574,27 @@ def print_game_inform(member) -> str:
     msg += "\n<@{}> 님의 게임 상태 정보\n".format(userid)
     msg += "```\n"
     for activity in member.activities:
-        if isinstance(activity, discord.activity.Activity) is not True:
-            msg += "not activity status"
+        if isinstance(activity, discord.activity.Game) is True:
+            msg += "Activity type : Game\n"
+            msg += "activity.name : {}\n".format(activity.name)
             continue
-        msg += "\n"
-        msg += "activity.name : {}\n".format(activity.name)
-        msg += "activity.details : {}\n".format(activity.details)
-        msg += "activity.large_image_text : {}\n".format(activity.large_image_text)
-        msg += "activity.small_image_text : {}\n".format(activity.small_image_text)
-        if activity.assets is None:
-            msg += "activity.assets : None\n"
-        else:
-            msg += "activity.assets['large_text'] : {}\n".format(activity.assets.get("large_text"))
-            msg += "activity.assets['small_text'] : {}\n".format(activity.assets.get("small_text"))
+
+        elif isinstance(activity, discord.activity.Activity) is True:
+            msg += "\n"
+            msg += "activity type : Activity\n"
+            msg += "activity.name : {}\n".format(activity.name)
+            msg += "activity.details : {}\n".format(activity.details)
+            msg += "activity.large_image_text : {}\n".format(activity.large_image_text)
+            msg += "activity.small_image_text : {}\n".format(activity.small_image_text)
+            if activity.assets is None:
+                msg += "activity.assets : None\n"
+            else:
+                msg += "activity.assets['large_text'] : {}\n".format(activity.assets.get("large_text"))
+                msg += "activity.assets['small_text'] : {}\n".format(activity.assets.get("small_text"))
+            continue
+
+        msg += "not activity status"
+
     msg += "```"
 
     return msg
