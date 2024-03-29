@@ -31,8 +31,8 @@
 hs_err_pid*
 
 # IDE setting files
-.vscode/**
-!.vscode/*.code-workspace
+**/.vscode/**
+!**/.vscode/*.code-workspace
 .idea/
 
 # Ignore Gradle project-specific cache directory
