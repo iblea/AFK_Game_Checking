@@ -1,0 +1,18 @@
+{
+    "folders": [
+        {
+            "name": "discord",
+            "path": "../"
+        },
+    ],
+    "settings": {
+        "java.compile.nullAnalysis.mode": "automatic",
+        "java.jdt.ls.java.home": "/usr/lib/jvm/java-17-openjdk-arm64",
+        "java.references.includeDecompiledSources": true,
+        "java.symbols.includeSourceMethodDeclarations": true,
+        // "java.errors.incompleteClasspath.severity": "ignore",
+
+
+
+    }
+}
