@@ -30,9 +30,9 @@ dependencies {
 
     // lombok library
     compileOnly 'org.projectlombok:lombok:1.18.32'
-    // testCompileOnly 'org.projectlombok:lombok:1.18.32'
-    // annotationProcessor 'org.projectlombok:lombok:1.18.32'
-    // testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
+    testCompileOnly 'org.projectlombok:lombok:1.18.32'
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
 
     // Discord
     implementation 'net.dv8tion:JDA:4.3.0_277'
@@ -43,6 +43,11 @@ application {
     mainClass = 'discordbot.Main'
 }
 
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
