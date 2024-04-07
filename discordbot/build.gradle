@@ -20,6 +20,7 @@ repositories {
     }
 }
 
+// https://mvnrepository.com/
 dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
@@ -35,7 +36,9 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
 
     // Discord
-    implementation 'net.dv8tion:JDA:4.3.0_277'
+    // implementation 'net.dv8tion:JDA:4.3.0_277'
+    // https://mvnrepository.com/artifact/net.dv8tion/JDA
+    implementation 'net.dv8tion:JDA:5.0.0-beta.21'
 }
 
 application {
