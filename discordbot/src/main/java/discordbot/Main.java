@@ -3,36 +3,20 @@
  */
 package discordbot;
 
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.OnlineStatus;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-
-import javax.security.auth.login.LoginException;
 import java.io.IOException;
 
+import javax.security.auth.login.LoginException;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+
 public class Main extends ListenerAdapter {
-	private static final String PATH = "./app/src/main/resources/token.txt";
+	private static final String PATH = "./src/main/resources/token.txt";
 
 	public static void main(String[] args)
-			throws LoginException, IOException {
+			throws LoginException, InterruptedException, IOException {
 		DiscordToken token = new DiscordToken(PATH);
 		System.out.println("botToken : " + token.getBotToken());
 
-		// JDA 객체 생성
-		// https://lovelyunsh.tistory.com/202
-		JDA jda = JDABuilder.createDefault(token.getBotToken())
-				.build();
-
-		// bot Online 표시
-		jda.getPresence().setStatus(OnlineStatus.ONLINE);
-
-		// bot Event 설정
-		BotEvent botEvent = new BotEvent();
-
-		// botEvent Status 설정
-		jda.addEventListener(botEvent);
-
-		System.out.println("Bot Run Success");
+		DiscordApi api = new DiscordApi(token.getBotToken());
+		api.botStart();
 	}
 }
