@@ -42,7 +42,7 @@ hs_err_pid*
 build
 
 # Discord Bot Token Information
-token.txt
+discordbot/src/main/resources/token.txt
 
 # db file
 *.sqlite
