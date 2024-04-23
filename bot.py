@@ -5,6 +5,7 @@ from discord.ext import tasks, commands
 import json
 from os.path import isfile
 from time import sleep
+import util
 
 # game_scheduler
 # 게임 이름은 영어일 경우 모두 소문자로, 공백 없이 적어주세요
@@ -31,6 +32,8 @@ first_alert_interval = 10
 
 config:dict = None
 config_file:str = "config.json"
+
+util.hello()
 
 def is_use_telegram(config):
     if 'telegram' not in config:
@@ -328,6 +331,9 @@ async def game_scheduler():
         alert_list = []
         debug_msg = ""
 
+        if user["enable"] == 0:
+            continue
+
         key = ""
         for i in range(len(user["id"])):
             key += (str(user["id"][i]) + "|")
@@ -341,11 +347,23 @@ async def game_scheduler():
                 none_users.append(index)
                 none_flag = True
                 break
+
             # 리스트 인원 중 한명이라도 해당 게임을 하고 있으면 해당 유저는 게임을 하고 있다고 간주 (부계정)
             if stat == 0:
+                # alert 가 0이었으면, 방금 게임을 시작한 것, alert을 1로 자동 조정한다.
+                if user["alert"] == 0:
+                    user["alert"] = 1
                 alert_list = []
                 debug_msg = ""
                 break
+
+            # 알람
+            if user["alert"] == 0:
+                # alert 가 0이면, 사용자가 알람을 임시적으로 받지 않는다고 설정한 것. (즉, 튕긴 것을 okay 명령어로 체크한 것)
+                alert_list = []
+                debug_msg = ""
+                break
+
             alert_list.append([stat, member.id, member.display_name, member.discriminator])
             if config["debug_mode"] == True:
                 debug_msg += "stat : {}\n".format(stat)
@@ -774,6 +792,8 @@ async def useradd_function(ctx, func_len):
 
     # 초기화
     user_inform = {}
+    user_inform['enable'] = 1
+    user_inform['alert'] = 1
     user_inform['id'] = [ ]
     user_inform['name'] = [ ]
     user_inform["display_name"] = [ ]
@@ -878,8 +898,10 @@ async def userlist(ctx):
                 nickname += "{}#{}, ".format(user['display_name'][i], user['tag'][i])
             realname = realname[:-2]
             nickname = nickname[:-2]
+            statstr = "\n현재 상태 : enable - {}, alert - {}".format(user["enable"], user["alert"])
             msg += realname
             msg += nickname
+            msg += statstr
 
 
     msg += "```"
@@ -965,6 +987,137 @@ def main():
 
     bot.run(token)
     set_config()
+
+
+async def enable_function(ctx, func_len):
+    global config
+    global bot
+    if channel_check(ctx.channel.id) == False:
+        return
+    # print(ctx.message.content)
+    userids = parse_mention(ctx, func_len)
+    if len(userids) <= 0:
+        await ctx.send("잘못된 명령어입니다")
+        return
+    if len(userids) > 1:
+        await ctx.send("enable 명령어는 복수 개의 mention과 함께 사용할 수 없습니다.")
+        return
+
+    finduser = userids[0]
+    count = 0
+    for i in range(len(config["users"])):
+        users = config["users"][i]
+        if finduser in users["id"]:
+            config["users"][i]["enable"] = 1
+            config["users"][i]["alert"] = 1
+            count += 1
+
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
+
+    if count > 0:
+        await ctx.send("enable 성공")
+    else:
+        await ctx.send("사용자를 찾을 수 없습니다.")
+    return
+
+@bot.command()
+async def enable(ctx):
+    await enable_function(ctx, 7)
+    return
+
+
+async def disable_function(ctx, func_len):
+    global config
+    global bot
+    if channel_check(ctx.channel.id) == False:
+        return
+    # print(ctx.message.content)
+    userids = parse_mention(ctx, func_len)
+    if len(userids) <= 0:
+        await ctx.send("잘못된 명령어입니다")
+        return
+    if len(userids) > 1:
+        await ctx.send("disable 명령어는 복수 개의 mention과 함께 사용할 수 없습니다.")
+        return
+
+    finduser = userids[0]
+    count = 0
+    for i in range(len(config["users"])):
+        users = config["users"][i]
+        if finduser in users["id"]:
+            config["users"][i]["enable"] = 0
+            config["users"][i]["alert"] = 0
+            count += 1
+
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
+
+    if count > 0:
+        await ctx.send("disable 성공")
+    else:
+        await ctx.send("사용자를 찾을 수 없습니다.")
+    return
+
+@bot.command()
+async def disable(ctx):
+    await disable_function(ctx, 8)
+    return
+
+
+async def okay_function(ctx, func_len):
+    global config
+    global bot
+    if channel_check(ctx.channel.id) == False:
+        return
+    # print(ctx.message.content)
+    userids = parse_mention(ctx, func_len)
+    if len(userids) <= 0:
+        await ctx.send("잘못된 명령어입니다")
+        return
+    if len(userids) > 1:
+        await ctx.send("okay 명령어는 복수 개의 mention과 함께 사용할 수 없습니다.")
+        return
+
+    finduser = userids[0]
+    count = 0
+    for i in range(len(config["users"])):
+        users = config["users"][i]
+        if finduser in users["id"]:
+            if users["enable"] == 0:
+                continue
+            config["users"][i]["alert"] = 0
+            count += 1
+
+    if set_config() == False:
+        ctx.send("저장에 실패하였습니다.")
+        await bot.close()
+        await exit(1)
+
+    if count > 0:
+        await ctx.send("알람을 일시적으로 비활성화 합니다.")
+    else:
+        await ctx.send("사용자를 찾을 수 없습니다.")
+    return
+
+@bot.command()
+async def okay(ctx):
+    await okay_function(ctx, 5)
+
+
+@bot.command()
+async def ok(ctx):
+    await okay_function(ctx, 3)
+
+@bot.command()
+async def userok(ctx):
+    await okay_function(ctx, 7)
+
+
 
 if __name__ == "__main__":
     main()
