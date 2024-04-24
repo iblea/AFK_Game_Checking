@@ -5,7 +5,6 @@ from discord.ext import tasks, commands
 import json
 from os.path import isfile
 from time import sleep
-import util
 
 # game_scheduler
 # 게임 이름은 영어일 경우 모두 소문자로, 공백 없이 적어주세요
