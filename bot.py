@@ -325,8 +325,8 @@ async def game_scheduler():
     none_flag = False
 
     rewrite_flag = False
-    for i in range(len(config["users"])):
-        user = config["users"][i]
+    for config_idx in range(len(config["users"])):
+        user = config["users"][config_idx]
 
         index += 1
         none_flag = False
@@ -354,7 +354,7 @@ async def game_scheduler():
             if stat == 0:
                 # alert 가 0이었으면, 방금 게임을 시작한 것, alert을 1로 자동 조정한다.
                 if user["alert"] == 0:
-                    config["users"][i]["alert"] = 1
+                    config["users"][config_idx]["alert"] = 1
                     rewrite_flag = True
                 alert_list = []
                 debug_msg = ""
