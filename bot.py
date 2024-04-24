@@ -32,7 +32,6 @@ first_alert_interval = 10
 config:dict = None
 config_file:str = "config.json"
 
-util.hello()
 
 def is_use_telegram(config):
     if 'telegram' not in config:
