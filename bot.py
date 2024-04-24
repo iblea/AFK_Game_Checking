@@ -323,7 +323,11 @@ async def game_scheduler():
     none_users = []
     index = -1
     none_flag = False
-    for user in config["users"]:
+
+    rewrite_flag = False
+    for i in range(len(config["users"])):
+        user = config["users"][i]
+
         index += 1
         none_flag = False
         alert_list = []
@@ -350,7 +354,8 @@ async def game_scheduler():
             if stat == 0:
                 # alert 가 0이었으면, 방금 게임을 시작한 것, alert을 1로 자동 조정한다.
                 if user["alert"] == 0:
-                    user["alert"] = 1
+                    config["users"][i]["alert"] = 1
+                    rewrite_flag = True
                 alert_list = []
                 debug_msg = ""
                 break
@@ -387,6 +392,12 @@ async def game_scheduler():
         for none_idx in none_users:
             config["users"].pop(none_idx - del_idx)
             del_idx += 1
+
+    if rewrite_flag == True:
+        if set_config() == False:
+            await schedule_channel.send("저장에 실패하였습니다.")
+            await bot.close()
+            await exit(1)
 
 
 def channel_check(channel):
