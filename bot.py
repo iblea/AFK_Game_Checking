@@ -331,7 +331,8 @@ async def game_scheduler():
         index += 1
         none_flag = False
         alert_list = []
-        debug_msg = ""
+        debug_msg: str = ""
+        alert_msg: str = ""
 
         if user["enable"] == 0:
             continue
@@ -365,6 +366,10 @@ async def game_scheduler():
                 # alert 가 0이면, 사용자가 알람을 임시적으로 받지 않는다고 설정한 것. (즉, 튕긴 것을 okay 명령어로 체크한 것)
                 alert_list = []
                 debug_msg = ""
+                # 게임을 시작했다고 알림
+                for user in user["id"]:
+                    alert_msg += "<@{}> ".format(user)
+                alert_msg += "  '{}' 게임 시작\n".format(gamename)
                 continue
 
             alert_list.append([stat, member.id, member.display_name, member.discriminator])
@@ -386,6 +391,9 @@ async def game_scheduler():
             await alert_channel_list(alert_list)
             if debug_msg != "":
                 await schedule_channel.send(debug_msg)
+
+        if len(alert_msg) > 0:
+            await schedule_channel.send(alert_msg)
 
     if len(none_users) > 0:
         del_idx = 0
