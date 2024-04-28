@@ -357,12 +357,12 @@ async def game_scheduler():
                 if user["alert"] == 0:
                     config["users"][config_idx]["alert"] = 1
                     rewrite_flag = True
+                    # 게임을 시작했다고 알림
+                    for user in user["id"]:
+                        alert_msg += "<@{}> ".format(user)
+                    alert_msg += "  '{}' 게임 시작\n".format(gamename)
                 alert_list = []
                 debug_msg = ""
-                # 게임을 시작했다고 알림
-                for user in user["id"]:
-                    alert_msg += "<@{}> ".format(user)
-                alert_msg += "  '{}' 게임 시작\n".format(gamename)
                 break
 
             # 알람
@@ -392,7 +392,7 @@ async def game_scheduler():
             if debug_msg != "":
                 await schedule_channel.send(debug_msg)
 
-        if len(alert_msg) > 0:
+        if len(alert_msg) > 0 and rewrite_flag == True:
             await schedule_channel.send(alert_msg)
 
     if len(none_users) > 0:
