@@ -359,6 +359,10 @@ async def game_scheduler():
                     rewrite_flag = True
                 alert_list = []
                 debug_msg = ""
+                # 게임을 시작했다고 알림
+                for user in user["id"]:
+                    alert_msg += "<@{}> ".format(user)
+                alert_msg += "  '{}' 게임 시작\n".format(gamename)
                 break
 
             # 알람
@@ -366,10 +370,6 @@ async def game_scheduler():
                 # alert 가 0이면, 사용자가 알람을 임시적으로 받지 않는다고 설정한 것. (즉, 튕긴 것을 okay 명령어로 체크한 것)
                 alert_list = []
                 debug_msg = ""
-                # 게임을 시작했다고 알림
-                for user in user["id"]:
-                    alert_msg += "<@{}> ".format(user)
-                alert_msg += "  '{}' 게임 시작\n".format(gamename)
                 continue
 
             alert_list.append([stat, member.id, member.display_name, member.discriminator])
