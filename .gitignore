@@ -50,3 +50,6 @@ __pycache__/
 discordbot/
 
 config.json
+
+# log
+nohup.out
